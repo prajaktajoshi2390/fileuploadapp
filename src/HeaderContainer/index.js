@@ -26,7 +26,7 @@ const HeaderContainer = (props) => {
             <MenuIcon />
         </IconButton> : null }
         <Typography variant="h6" noWrap>
-            My File Manager
+            File Management System
         </Typography>
         { props.username !== '' ? <div>Welcome {props.username}</div> : null }
         </Toolbar>

@@ -88,6 +88,8 @@ const Home = () => {
   const [isAuthed, setIsAuthed] = React.useState(false);
   const [accessToken, setAccessToken] = React.useState('');
   const [username, setUsername] = React.useState('');
+  const [firstname, setFirstname] = React.useState('');
+  const [lastname, setLastname] = React.useState('');
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -105,9 +107,11 @@ const Home = () => {
     }
   }, [accessToken]);
 
-  const setLoginDetails = (token, username) => {
+  const setLoginDetails = (token, username, firstname, lastname) => {
     setAccessToken(token);
     setUsername(username);
+    setFirstname(firstname);
+    setLastname(lastname);
   }
   return (
     <Router history={history}>
@@ -154,9 +158,9 @@ const Home = () => {
         })}
       >
         <div className={classes.drawerHeader} />
-        <Route exact path="/" component={() => <Login onSuccess={(token, username) => setLoginDetails(token, username)} />} />
+        <Route exact path="/" component={() => <Login onSuccess={(token, username, firstname, lastname) => setLoginDetails(token, username, firstname, lastname)} />} />
         <Route path="/list" component={() => <FileList accessToken={accessToken} username={username}/>} />
-        <Route path="/upload" component={() => <FileUploader accessToken={accessToken} username={username}/>} />
+        <Route path="/upload" component={() => <FileUploader accessToken={accessToken} username={username} firstname={firstname} lastname={lastname}/>} />
       </div>
     </div>
     </Router>

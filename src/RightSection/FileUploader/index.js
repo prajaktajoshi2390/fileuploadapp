@@ -1,8 +1,23 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useDropzone} from 'react-dropzone';
-import axios from "axios";
+
+import GetUserFileList from '../../services/GetUserFileList';
+import GetSignedURL from '../../services/GetSignedURL';
+import InsertFileToS3 from '../../services/InsertFileToS3';
+import InsertFileToDB from '../../services/InsertFileToDB';
 
 const FileUploader = (props) => {
+
+  const [fileList, setFileList] = React.useState([]);
+
+  useEffect(() => {
+      GetUserFileList({accessToken: props.accessToken, username: props.username}).then(function (response) {
+        setFileList(response.fileList);
+      })
+      .catch(function (error) {
+        setFileList([]);
+      });
+  }, []);
 
     const onDrop = (files) => {
         if (files[0].size > 10000000) {
@@ -11,50 +26,32 @@ const FileUploader = (props) => {
         const fileKey = files[0].name;
         const urlMain = "https://zf1jtpxmd0.execute-api.us-east-2.amazonaws.com/Dev?fileName=" + 
         files[0].name + "&fileType=" + files[0].type + "&fileKey=" + fileKey;
-        axios.get(urlMain, {headers: {Authorization: props.accessToken}}).then((response) => {
-            // Getting the url from response
-            const url = response.data.fileUploadURL;
-   
-            // Initiating the PUT request to upload file    
-            axios({
-                method: "PUT",
-                url: url,
-                data: files[0],
-                headers: { "Content-Type": "multipart/form-data" },
-            })
-                .then(res => {
-                    // axios({
-                    //     method: "POST",
-                    //     url: '/fileUpload',
-                    //     // url:'https://t9tyn8rv07.execute-api.us-east-2.amazonaws.com/Dev',
-                    //     data: {
-                    //         username: props.username,
-                    //         fileUploadedTime: new Date().toString(),
-                    //         fileUpdatedTime: new Date().toString(),
-                    //         fileDescription: files[0].name,
-                    //         headers: {"Authorization": props.accessToken}
-                    //       },
-                    // })
-                    axios.put("https://t9tyn8rv07.execute-api.us-east-2.amazonaws.com/Dev", {
-                                username: props.username,
-                                fileUploadedTime: new Date().toString(),
-                                fileUpdatedTime: new Date().toString(),
-                                fileDescription: files[0].name
-                              },
-                        {headers: {Authorization: props.accessToken}})
-                       .then(function (response) {
-                        console.log('response----', response);
-                        alert('File Uploadeded successfully');
-                      })
-                      .catch(function (error) {
-                        console.log(error);
-                        alert('File Uploadeded successfully but entry is not added to database');
-                      });
+        GetSignedURL({accessToken: props.accessToken, urlMain}).then(function (response) {                
+            InsertFileToS3({url: response, fileData: files[0]}).then(function (response) {
+                const filteredFileList = fileList.filter(fileDetail => fileDetail.fileDescription === files[0].name);
+                const fileUploadedTime = filteredFileList.length > 0 ? filteredFileList[0].fileUploadedTime : new Date().toString();
+                const fileId = filteredFileList.length > 0 ? filteredFileList[0].id : new Date().getTime();
+                InsertFileToDB({
+                username: props.username,
+                fileUploadedTime: fileUploadedTime,
+                fileUpdatedTime: new Date().toString(),
+                fileDescription: files[0].name,
+                firstname: props.firstname,
+                lastname: props.lastname,
+                id: Number(fileId),
+                accessToken: props.accessToken})
+                .then(function (response) {
+                    alert('File Uploadeded successfully');
                 })
-                .catch(err => {
-                    alert('Error');
+                .catch(function (error) {
+                    console.log('File Uploadeded successfully but entry is not added to database', error);
                 });
+            }).catch(function (error) {
+                alert('Error in Uploading file');
+            });
+                    
         });
+            
     };
 
     const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop});
