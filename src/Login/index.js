@@ -105,9 +105,11 @@ const Login = (props) => {
                     <Avatar className={classes.avatar}>
                     <LockOutlinedIcon />
                     </Avatar>
-                    <Typography component="h1" variant="h5">
-                    Sign in
-                    </Typography>
+                    { displayLogin ? <Typography component="h1" variant="h5">
+                    Sign In
+                    </Typography> : <Typography component="h1" variant="h5">
+                    Sign Up
+                    </Typography> }
                     <form className={classes.form} noValidate>
                         { !displayLogin ? <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
